@@ -13,13 +13,14 @@ function randomValueHex(len) {
         .slice(0,len);   // return required number of characters
 }
 
-function managedConnection(connection, remote) {
+function managedConnection(connection, remote, disconnectedCallback, connectedCallback, failedCallback) {
 	var manager = { retries: 0, connected: false, failed: false, error: null, shouldClose: false, timeout: null };
 	// Connect to Server
 	function handleError(error) {
 		if(error) {
 			if (manager.retries <= 10) {
 				manager.timeout = setTimeout(function(){
+					if(disconnectedCallback) disconnectedCallback(manager);
 					manager.connected = false;
 					manager.error = error;
 					manager.retries++;
@@ -28,11 +29,11 @@ function managedConnection(connection, remote) {
 				}, 1000);
 			}else{
 				manager.failed = true;
+				if(failedCallback) failedCallback(manager);
 			}
 		}
 	}
 	function attempt(init) {
-		console.log("CONNECTION ATTEMPTED", manager.retries);
 		if(!init) {
 			connection.sftp(new Function);
 		}else{
@@ -48,7 +49,7 @@ function managedConnection(connection, remote) {
 				manager.retries = 0;
 				manager.connected = true;
 				manager.error = null;
-				console.log("CONNECTED")
+				if(connectedCallback) connectedCallback();
 			});
 			// Try to reconnect
 			connection.on('error', handleError);
@@ -95,9 +96,9 @@ var InstaDeploy = function (remoteArray, options) {
 		var parallelExecutionArray = [];
 		for(var name in context.clientInstances) { 
 			parallelExecutionArray.push(function(callback){
-				if(context.clientInstances[name]) context.clientInstances[name].upload(file.localPath, file.remotePath, function(){
-					console.log("UPLOADED", file);
-					callback(); 
+				if(context.clientInstances[name]) context.clientInstances[name].upload(file.localPath, file.remotePath, function(error){
+					if(!error) console.log("UPLOADED", file);
+					callback();
 				});
 				else callback(new Error("Connection instance not found!"));
 			});
@@ -117,8 +118,8 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 				context.smartQueueFlush();
 			}, context.options.queueTime || 3000);
 			/* Implement a rename function */
-			context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(){
-				console.log("DONE", directPath, path.join(remotePath, relativePath));
+			context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(error){
+				if(!error) console.log("DONE", directPath, path.join(remotePath, relativePath));
 			}});
 		});
 	}, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
