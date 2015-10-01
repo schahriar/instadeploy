@@ -25,6 +25,7 @@
   "homepage": "https://github.com/schahriar/instadeploy#readme",
   "dependencies": {
     "async": "^1.4.2",
+    "lodash.uniq": "^3.2.2",
     "scp2": "^0.2.2"
   },
   "devDependencies": {
