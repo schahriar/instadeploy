@@ -1,0 +1,26 @@
+{
+  "name": "instadeploy",
+  "version": "0.1.0",
+  "description": "Instantly Deploy a folder to multiple servers",
+  "main": "instadeploy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schahriar/instadeploy.git"
+  },
+  "keywords": [
+    "deploy",
+    "sftp",
+    "ssh",
+    "instant",
+    "instadeploy"
+  ],
+  "author": "Schahriar SaffarShargh <info@schahriar.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/schahriar/instadeploy/issues"
+  },
+  "homepage": "https://github.com/schahriar/instadeploy#readme"
+}
