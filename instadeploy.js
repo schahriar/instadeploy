@@ -70,6 +70,14 @@ function managedConnection(connection, remote, disconnectedCallback, connectedCa
 var InstaDeploy = function (remoteArray, options) {
 	var context = this;
 	
+	/*
+		OPTIONS
+		▬▬▬▬▬▬▬
+		maxConcurrentConnections:   <Number> 5,
+		maxConcurrentFiles:         <Number> 10,
+		queueTime:                  <Time:MS> 3000
+		
+	*/
 	context.options = options || {};
 	context.clientInstances = {};
 	// Smart Queue Prevents multiple uploads of the same file
