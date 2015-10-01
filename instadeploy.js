@@ -1,7 +1,7 @@
 var path = require('path');
 var walker = require('./src/walk.js');
 var watcher = require('./src/watch.js');
-var managedConnection = require('./src/connectionManager.js');
+var ConnectionManager = require('./src/connectionManager.js');
 var minimatch = require("minimatch");
 var async = require('async');
 var uniq = require('lodash.uniq');
@@ -58,7 +58,17 @@ var InstaDeploy = function (remoteArray, options) {
 	// Push New instances of scp2 for every remote server provided
 	if(remoteArray) remoteArray.forEach(function(remote) {
 		if(!remote.name) remote.name = randomValueHex(8);
-		managedConnection(context.clientInstances[remote.name], remote);
+		var manager = new ConnectionManager(context.clientInstances[remote.name], remote);
+		manager.on('attempting', function(remote) {
+			console.log("Attempting Connection to", remote.host);
+		})
+		manager.on('connected', function(remote) {
+			console.log("Connected to", remote.host);
+		})
+		manager.on('disconnected', function(remote) {
+			console.log("Disconnected from", remote.host);
+		})
+		manager.attempt();
 	})
 	// Create an Async queue for uploads
 	context.queue = async.queue(function (file, callback) {

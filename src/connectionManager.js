@@ -1,58 +1,76 @@
+var eventEmmiter = require('events').EventEmitter;
+var util = require('util');
 var Client = require('scp2').Client;
 
-function connectionManger(connection, remote, disconnectedCallback, connectedCallback, failedCallback) {
-	var manager = { retries: 0, connected: false, failed: false, error: null, shouldClose: false, timeout: null };
-	/* Add Events instead of multiple callbacks */
-	// Connect to Server
-	function handleError(error) {
-		if(error) {
-			if (manager.retries <= 10) {
-				manager.timeout = setTimeout(function(){
-					if(disconnectedCallback) disconnectedCallback(manager);
-					manager.connected = false;
-					manager.error = error;
-					manager.retries++;
-					clearTimeout(manager.timeout);
-					attempt();
-				}, 1000);
-			}else{
-				manager.failed = true;
-				if(failedCallback) failedCallback(manager);
-			}
-		}
-	}
-	function attempt(init) {
-		if(!init) {
-			connection.sftp(new Function);
-		}else{
-			connection = new Client({
-				port: remote.port || 22,
-				host: remote.host,
-				username: remote.username,
-				password: remote.password,
-			});
-			connection.sftp(handleError);
-			// Reset on connection
-			connection.on('connect', function() {
-				manager.retries = 0;
-				manager.connected = true;
-				manager.error = null;
-				if(connectedCallback) connectedCallback();
-			});
-			// Try to reconnect
-			connection.on('error', handleError);
-			connection.on('end', function() {
-				if(!manager.shouldClose) handleError(true);
-			})
-			connection.on('close', function() {
-				if(!manager.shouldClose) handleError(true);
-			})
-		}
-	}
-	// Intialize
-	attempt(true);
+var ConnectionManger = function Connection_Manger_Init(connection, remote) {
+	this.retries = 0;
+	this.connection = false;
+	this.remote = remote;
+	this.connected = false;
+	this.failed = false;
+	this.error = null;
+	this.shouldClose = false;
+	this.timeout = null;
 	
-	return manager;
+	eventEmmiter.call(this);
 }
 
-module.exports = connectionManger;
+util.inherits(ConnectionManger, eventEmmiter);
+
+ConnectionManger.prototype.attempt = function Connection_Manger_Attempt_Init() {
+	// Intialize
+	this.AttemptConnection(true);
+}
+
+ConnectionManger.prototype.ErrorHandler = function Connection_Manger_Error_Handler(error) {
+	var _this = this;
+	if(error) {
+		if (_this.retries <= 10) {
+			_this.timeout = setTimeout(function(){
+				_this.emit('disconnected', _this.remote, _this);
+				_this.connected = false;
+				_this.error = error;
+				_this.retries++;
+				clearTimeout(_this.timeout);
+				_this.AttemptConnection();
+			}, 1000);
+		}else{
+			_this.failed = true;
+			_this.emit('failed', _this);
+		}
+	}
+}
+
+ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attempt(init) {
+	var _this = this;
+	// Connect to Server
+	_this.emit('attempting', _this.remote, _this);
+	if(!init) {
+		_this.connection.sftp(new Function);
+	}else{
+		_this.connection = new Client({
+			port: _this.remote.port || 22,
+			host: _this.remote.host,
+			username: _this.remote.username,
+			password: _this.remote.password,
+		});
+		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });
+		// Reset on connection
+		_this.connection.on('connect', function() {
+			_this.retries = 0;
+			_this.connected = true;
+			_this.error = null;
+			_this.emit('connected', _this.remote, _this);
+		});
+		// Try to reconnect
+		_this.connection.on('error', _this.ErrorHandler);
+		_this.connection.on('end', function() {
+			if(!_this.shouldClose) _this.ErrorHandler(true);
+		});
+		_this.connection.on('close', function() {
+			if(!_this.shouldClose) _this.ErrorHandler(true);
+		});
+	}
+}
+
+module.exports = ConnectionManger;
