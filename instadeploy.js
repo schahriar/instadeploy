@@ -18,7 +18,7 @@ function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
 	var doesMatch = false;
 	patterns.forEach(function(pattern){
-		doesMatch = (pattern[0] !== '!')?minimatch(base, pattern):!minimatch(base, pattern);
+		doesMatch = minimatch(base, pattern);
 	})
 	return doesMatch;
 }
@@ -34,7 +34,7 @@ var InstaDeploy = function (remoteArray, options) {
 		queueTime:                  <Time:MS> 3000,
 		ignoreFolders:              <Array> ['.git', 'node_modules'],
 		ignoreFiles:                <Array> ['.gitignore']
-		
+	
 	*/
 	context.options = options || {};
 	context.clientInstances = {};
