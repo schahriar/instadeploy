@@ -3,7 +3,6 @@ var walker = require('./src/walk.js');
 var watcher = require('./src/watch.js');
 var managedConnection = require('./src/connectionManager.js');
 var minimatch = require("minimatch");
-var Client = require('scp2').Client;
 var async = require('async');
 var uniq = require('lodash.uniq');
 var crypto = require('crypto');

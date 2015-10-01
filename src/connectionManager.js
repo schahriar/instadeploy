@@ -1,3 +1,5 @@
+var Client = require('scp2').Client;
+
 function connectionManger(connection, remote, disconnectedCallback, connectedCallback, failedCallback) {
 	var manager = { retries: 0, connected: false, failed: false, error: null, shouldClose: false, timeout: null };
 	/* Add Events instead of multiple callbacks */
