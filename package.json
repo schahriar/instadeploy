@@ -4,7 +4,7 @@
   "description": "Instantly Deploy a folder to multiple servers",
   "main": "instadeploy.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha ./test.js"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,9 @@
   "dependencies": {
     "async": "^1.4.2",
     "scp2": "^0.2.2"
+  },
+  "devDependencies": {
+    "chai": "^3.3.0",
+    "mocha": "^2.3.3"
   }
 }
