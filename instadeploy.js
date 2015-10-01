@@ -18,10 +18,7 @@ function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
 	var doesMatch = false;
 	patterns.forEach(function(pattern){
-		// Only Look for Exclusions
-		if((pattern[0] !== '!') !== doesMatch) return;
-		
-		doesMatch = minimatch(base, pattern);
+		doesMatch = (pattern[0] !== '!')?minimatch(base, pattern):!minimatch(base, pattern);
 	})
 	return doesMatch;
 }
@@ -36,7 +33,7 @@ var InstaDeploy = function (remoteArray, options) {
 		maxConcurrentFiles:         <Number> 10,
 		queueTime:                  <Time:MS> 3000,
 		ignoreFolders:              <Array> ['.git', 'node_modules'],
-		ignoreFiles:                <Array> ['.*']
+		ignoreFiles:                <Array> ['.gitignore']
 		
 	*/
 	context.options = options || {};
@@ -91,7 +88,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	walker(directoryPath, function WALKER_ON_FILE(error, directPath, relativePath, stats) {
 		// FILE FUNCTION
 		// IF NO MATCH WATCH FILE
-		if(!matchMaker(path.basename(directPath), context.options.ignoreFiles || ['.*'])) {
+		if(!matchMaker(path.basename(directPath), context.options.ignoreFiles || ['.gitignore'])) {
 			watcher(directPath, function FILE_ON_CHANGE(event, fileName) {
 				clearTimeout(context.smartQueueTimeFrame);
 				context.smartQueueTimeFrame = setTimeout(function(){
