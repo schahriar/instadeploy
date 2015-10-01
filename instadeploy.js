@@ -81,20 +81,25 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	var context = this;
 	walker(directoryPath, function WALKER_ON_FILE(error, directPath, relativePath, stats) {
 		// FILE FUNCTION
-		/* Add Ignore Options here */
-		watcher(directPath, function FILE_ON_CHANGE(event, fileName) {
-			clearTimeout(context.smartQueueTimeFrame);
-			context.smartQueueTimeFrame = setTimeout(function(){
-				context.smartQueueFlush();
-			}, context.options.queueTime || 3000);
-			/* Implement a rename function */
-			context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(error){
-				if(!error) console.log("DONE", directPath, path.join(remotePath, relativePath));
-			}});
-		});
+		// IF NO MATCH WATCH FILE
+		if(!matchMaker(path.basename(directPath), context.options.ignoreFiles || ['.*'])) {
+			watcher(directPath, function FILE_ON_CHANGE(event, fileName) {
+				clearTimeout(context.smartQueueTimeFrame);
+				context.smartQueueTimeFrame = setTimeout(function(){
+					context.smartQueueFlush();
+				}, context.options.queueTime || 3000);
+				/* Implement a rename function */
+				context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(error){
+					if(!error) console.log("DONE", directPath, path.join(remotePath, relativePath));
+				}});
+			});
+		}
 	}, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
 		// DIRECTORY FUNCTION
-		callback();
+		// IF NO MATCH INCLUDE FOLDER
+		if(!matchMaker(path.basename(directPath), context.options.ignoreFolders || ['.git', 'node_modules'])) {
+			callback();
+		}
 	}, function WALKER_DONE() {
 		// DONE FUNCTION
 		
