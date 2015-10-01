@@ -2,6 +2,7 @@ var path = require('path');
 var walker = require('./src/walk.js');
 var watcher = require('./src/watch.js');
 var managedConnection = require('./src/connectionManager.js');
+var minimatch = require("minimatch");
 var Client = require('scp2').Client;
 var async = require('async');
 var uniq = require('lodash.uniq');
@@ -14,6 +15,18 @@ function randomValueHex(len) {
         .slice(0,len);   // return required number of characters
 }
 
+function matchMaker(base, patterns) {
+	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
+	var doesMatch = false;
+	patterns.forEach(function(pattern){
+		// Only Look for Exclusions
+		if((pattern[0] !== '!') !== doesMatch) return;
+		
+		doesMatch = minimatch(base, pattern);
+	})
+	return doesMatch;
+}
+
 var InstaDeploy = function (remoteArray, options) {
 	var context = this;
 	
@@ -22,7 +35,9 @@ var InstaDeploy = function (remoteArray, options) {
 		▬▬▬▬▬▬▬
 		maxConcurrentConnections:   <Number> 5,
 		maxConcurrentFiles:         <Number> 10,
-		queueTime:                  <Time:MS> 3000
+		queueTime:                  <Time:MS> 3000,
+		ignoreFolders:              <Array> ['.git', 'node_modules'],
+		ignoreFiles:                <Array> ['.*']
 		
 	*/
 	context.options = options || {};
