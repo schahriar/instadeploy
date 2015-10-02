@@ -74,14 +74,13 @@ var InstaDeploy = function (remoteArray, options) {
 	context.queue = async.queue(function (file, callback) {
 		var parallelExecutionArray = [];
 		for(var name in context.clientInstances) { 
-			parallelExecutionArray.push(function(callback){
-				if(context.clientInstances[name]) context.clientInstances[name].upload(file.localPath, file.remotePath, function(error){
-					callback(error);
-				});
-				else callback(new Error("Connection instance not found!"));
+			parallelExecutionArray.push(function(_callback){
+				if(context.clientInstances[name]) context.clientInstances[name].upload(file.localPath, file.remotePath, _callback);
+				else _callback(new Error("Connection instance not found!"));
 			});
 		}
-		async.parallelLimit(parallelExecutionArray, context.options.maxConcurrentConnections || 5, callback);
+		if(parallelExecutionArray.length <= 0) callback(new Error("No Connections found!"));
+		else async.parallelLimit(parallelExecutionArray, context.options.maxConcurrentConnections || 5, callback);
 	}, context.options.maxConcurrentFiles || 10);
 	
 	eventEmmiter.call(this);
