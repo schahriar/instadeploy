@@ -27,13 +27,13 @@ function matchMaker(base, patterns) {
 
 var InstaDeploy = function (remoteArray, options) {
 	var context = this;
-	
+
 	/*
 		OPTIONS
 		▬▬▬▬▬▬▬
 		maxConcurrentConnections:   <Number> 5,
 		maxConcurrentFiles:         <Number> 10,
-		queueTime:                  <Time:MS> 3000,
+		queueTime:                  <Time:MS> 1500,
 		ignoreFolders:              <Array> ['.git', 'node_modules'],
 		ignoreFiles:                <Array> ['.gitignore']
 	
@@ -49,6 +49,7 @@ var InstaDeploy = function (remoteArray, options) {
 		// Remove Duplicates (reverse to select from the end)
 		uniq(context.smartQueueList.reverse(), 'remotePath').forEach(function(item) {
 			context.queue.push(item, item.callback);
+			context.emit('uploadStarted', item);
 		})
 		// Reset SmartQueue
 		context.smartQueueList = [];
@@ -98,7 +99,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 				clearTimeout(context.smartQueueTimeFrame);
 				context.smartQueueTimeFrame = setTimeout(function(){
 					context.smartQueueFlush();
-				}, context.options.queueTime || 3000);
+				}, context.options.queueTime || 1500);
 				/* Implement a rename function */
 				context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(error){
 					if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
