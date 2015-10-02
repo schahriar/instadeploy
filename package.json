@@ -27,10 +27,13 @@
     "async": "^1.4.2",
     "lodash.uniq": "^3.2.2",
     "minimatch": "^3.0.0",
-    "scp2": "^0.2.2"
+    "scp2": "0.1.0-b1"
   },
   "devDependencies": {
     "chai": "^3.3.0",
-    "mocha": "^2.3.3"
+    "keypair": "^1.0.0",
+    "mocha": "^2.3.3",
+    "ssh2": "^0.4.11",
+    "temp": "^0.8.3"
   }
 }
