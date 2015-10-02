@@ -58,24 +58,24 @@ var InstaDeploy = function (remoteArray, options) {
 	// Push New instances of scp2 for every remote server provided
 	if(remoteArray) remoteArray.forEach(function(remote) {
 		if(!remote.name) remote.name = randomValueHex(8);
-		var manager = new ConnectionManager(context.clientInstances[remote.name], remote);
-		manager.on('attempting', function(remote, manager) {
+		context.clientInstances[remote.name] = new ConnectionManager(remote);
+		context.clientInstances[remote.name].on('attempting', function(remote, manager) {
 			context.emit('attempt', remote, manager.retries);
 		})
-		manager.on('connected', function(remote) {
+		context.clientInstances[remote.name].on('connected', function(remote, manager) {
 			context.emit('connect', remote, manager.retries, manager.connection);
 		})
-		manager.on('disconnected', function(remote) {
+		context.clientInstances[remote.name].on('disconnected', function(remote, manager) {
 			context.emit('disconnect', remote, manager.retries, manager.error, manager.failed)
 		})
-		manager.attempt();
+		context.clientInstances[remote.name].connect(true);
 	})
 	// Create an Async queue for uploads
 	context.queue = async.queue(function (file, callback) {
 		var parallelExecutionArray = [];
 		for(var name in context.clientInstances) { 
 			parallelExecutionArray.push(function(_callback){
-				if(context.clientInstances[name]) context.clientInstances[name].upload(file.localPath, file.remotePath, _callback);
+				if(context.clientInstances[name].connection) context.clientInstances[name].connection.upload(file.localPath, file.remotePath, _callback);
 				else _callback(new Error("Connection instance not found!"));
 			});
 		}
@@ -111,6 +111,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	}, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
 		// DIRECTORY FUNCTION
 		// IF NO MATCH INCLUDE FOLDER
+		/* ADD DIRECTORY WATCH FOR NEW FILES */
 		if(!matchMaker(relativePath, context.options.ignoreFolders || ['.git', 'node_modules'])) {
 			callback();
 		}else{

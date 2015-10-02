@@ -2,10 +2,10 @@ var eventEmmiter = require('events').EventEmitter;
 var util = require('util');
 var Client = require('scp2').Client;
 
-var ConnectionManger = function Connection_Manger_Init(connection, remote) {
+var ConnectionManger = function Connection_Manger_Init(remote) {
 	this.retries = 0;
-	this.connection = false;
 	this.remote = remote;
+	this.connection = null;
 	this.connected = false;
 	this.failed = false;
 	this.error = null;
@@ -17,7 +17,7 @@ var ConnectionManger = function Connection_Manger_Init(connection, remote) {
 
 util.inherits(ConnectionManger, eventEmmiter);
 
-ConnectionManger.prototype.attempt = function Connection_Manger_Attempt_Init() {
+ConnectionManger.prototype.connect = function Connection_Manger_Attempt_Init() {
 	// Intialize
 	this.AttemptConnection(true);
 }
@@ -46,7 +46,9 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 	// Connect to Server
 	_this.emit('attempting', _this.remote, _this);
 	if(!init) {
-		_this.connection.sftp(new Function);
+		_this.connection.sftp(function(error){
+			_this.ErrorHandler.apply(_this, arguments) 
+		});
 	}else{
 		_this.connection = new Client({
 			port: _this.remote.port || 22,
@@ -57,7 +59,7 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 		});
 		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });
 		// Reset on connection
-		_this.connection.on('connect', function() {
+		_this.connection.on('ready', function() {
 			_this.retries = 0;
 			_this.connected = true;
 			_this.error = null;
