@@ -2,29 +2,32 @@ var fs = require('fs');
 var path = require('path');
 var async = require('async');
 
-function asyncWalk(directoryPaths, fileCallback, directoryCallback, doneCallback) {
-	var directoryPath, rootPath, execArray = [];
+function asyncWalk(directoryPaths, directoryCallback, doneCallback) {
+	var directoryPath, rootPath, execArray = [], isRoot = false;
 	if(Array.isArray(directoryPaths)) {
 		rootPath = directoryPaths[0];
 		directoryPath = directoryPaths[1];
 	}else{
 		rootPath = directoryPaths;
 		directoryPath = directoryPaths;
+		isRoot = true;
 	}
-	fs.readdir(directoryPath, function(error, files) {
-		if (error) return fileCallback(error);
-		files.forEach(function(name) {
+	if(isRoot) {
+		return directoryCallback(null, directoryPath, './', function(ignore){
+			if(!ignore) asyncWalk([rootPath, directoryPath], directoryCallback, doneCallback);
+		});
+	}
+	fs.readdir(directoryPath, function(error, folders) {
+		if (error) return directoryCallback(error);
+		folders.forEach(function(name) {
 			execArray.push(function(callback) {
 				var directPath = path.resolve(directoryPath, name);
 				var relativePath = path.join(path.relative(rootPath, directoryPath), name);
 				fs.stat(directPath, function(error, stats) {
-					if (error) return fileCallback(error);
-					if(stats.isFile()) {
-						fileCallback(null, directPath, relativePath, stats);
-						callback();
-					}else{
+					if (error) return directoryCallback(error);
+					if(!stats.isFile()) {
 						directoryCallback(null, directPath, relativePath, function(ignore) {
-							if(!ignore) asyncWalk([rootPath, directPath], fileCallback, directoryCallback, callback);
+							if(!ignore) asyncWalk([rootPath, directPath], directoryCallback, callback);
 							else callback();
 						})
 					}

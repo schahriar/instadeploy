@@ -2,7 +2,7 @@ var eventEmmiter = require('events').EventEmitter;
 var util = require('util');
 var path = require('path');
 var walker = require('./src/walk.js');
-var watcher = require('./src/watch.js');
+var Watcher = require('./src/watch.js');
 var ConnectionManager = require('./src/connectionManager.js');
 var minimatch = require("minimatch");
 var async = require('async');
@@ -88,31 +88,29 @@ var InstaDeploy = function (remoteArray, options) {
 
 util.inherits(InstaDeploy, eventEmmiter);
 
-InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
-	var context = this;
-	walker(directoryPath, function WALKER_ON_FILE(error, directPath, relativePath, stats) {
-		// FILE FUNCTION
-		// IF NO MATCH WATCH FILE
-		if(!matchMaker(relativePath, context.options.ignoreFiles || ['.gitignore'])) {
-			watcher(directPath, function FILE_ON_CHANGE(event, fileName) {
-				clearTimeout(context.smartQueueTimeFrame);
-				context.smartQueueTimeFrame = setTimeout(function(){
-					context.smartQueueFlush();
-				}, context.options.queueTime || 1500);
-				/* Implement a rename function */
-				context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(error){
-					if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
-					else context.emit('failed', error, directoryPath, path.join(remotePath, relativePath));
-				}});
+/*
+if(!matchMaker(relativePath, context.options.ignoreFiles || ['.gitignore'])) {
+			watcher.watch({ direct: directPath, directory: directoryPath, relative: relativePath, remote: remotePath }, function FILE_ON_UPLOAD(error) {
+				if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
+				else context.emit('failed', error, directoryPath, path.join(remotePath, relativePath));
 			});
 		}else{
 			context.emit('ignored', 'file', directPath, relativePath, context.options.ignoreFiles);
 		}
-	}, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
+*/
+
+InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
+	var context = this;
+	var watcher = new Watcher(matchMaker, context.options.ignoreFiles || ['.gitignore'], context.smartQueueList, context.smartQueueTimeFrame, context.smartQueueFlush, context.options.queueTime || 1500);
+	walker(directoryPath, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
 		// DIRECTORY FUNCTION
 		// IF NO MATCH INCLUDE FOLDER
 		/* ADD DIRECTORY WATCH FOR NEW FILES */
 		if(!matchMaker(relativePath, context.options.ignoreFolders || ['.git', 'node_modules'])) {
+			watcher.watch({ direct: directPath, directory: directoryPath, relative: relativePath, remote: remotePath }, true, function FILE_ON_NEW_UPLOAD(error) {
+				if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
+				else context.emit('failed', error, directoryPath, path.join(remotePath, relativePath));
+			});
 			callback();
 		}else{
 			context.emit('ignored', 'folder', directPath, relativePath, context.options.ignoreFolders);
