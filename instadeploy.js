@@ -18,8 +18,9 @@ function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
 	var doesMatch = false;
 	patterns.forEach(function(pattern){
-		doesMatch = minimatch(base, pattern);
-	})
+		doesMatch = ((doesMatch) && (pattern[0] !== '!'))?doesMatch:minimatch(base, pattern);
+	});
+	console.log(base, patterns, doesMatch)
 	return doesMatch;
 }
 
@@ -88,7 +89,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	walker(directoryPath, function WALKER_ON_FILE(error, directPath, relativePath, stats) {
 		// FILE FUNCTION
 		// IF NO MATCH WATCH FILE
-		if(!matchMaker(path.basename(directPath), context.options.ignoreFiles || ['.gitignore'])) {
+		if(!matchMaker(relativePath, context.options.ignoreFiles || ['.gitignore'])) {
 			watcher(directPath, function FILE_ON_CHANGE(event, fileName) {
 				clearTimeout(context.smartQueueTimeFrame);
 				context.smartQueueTimeFrame = setTimeout(function(){
@@ -103,7 +104,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	}, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
 		// DIRECTORY FUNCTION
 		// IF NO MATCH INCLUDE FOLDER
-		if(!matchMaker(path.basename(directPath), context.options.ignoreFolders || ['.git', 'node_modules'])) {
+		if(!matchMaker(relativePath, context.options.ignoreFolders || ['.git', 'node_modules'])) {
 			callback();
 		}
 	}, function WALKER_DONE() {
