@@ -122,7 +122,7 @@ Deployer.on('uploadStarted', function () {
 
 describe('Test Suite', function(){
   var directory = temp.mkdirSync('InstaDeployTest');
-  fs.writeFileSync(path.join(directory, './test.js'), '');
+  this.timeout(5500);
   Deployer.watch(directory, './test');
 	it("Should Connect To SFTP", function(done){
     Deployer.on('connect', function (remote) {
