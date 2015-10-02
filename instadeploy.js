@@ -22,7 +22,6 @@ function matchMaker(base, patterns) {
 	patterns.forEach(function(pattern){
 		doesMatch = ((doesMatch) && (pattern[0] !== '!'))?doesMatch:minimatch(base, pattern);
 	});
-	console.log(base, patterns, doesMatch)
 	return doesMatch;
 }
 
@@ -59,14 +58,14 @@ var InstaDeploy = function (remoteArray, options) {
 	if(remoteArray) remoteArray.forEach(function(remote) {
 		if(!remote.name) remote.name = randomValueHex(8);
 		var manager = new ConnectionManager(context.clientInstances[remote.name], remote);
-		manager.on('attempting', function(remote) {
-			console.log("Attempting Connection to", remote.host);
+		manager.on('attempting', function(remote, manager) {
+			context.emit('attempt', remote, manager.retries);
 		})
 		manager.on('connected', function(remote) {
-			console.log("Connected to", remote.host);
+			context.emit('connect', remote, manager.retries, manager.connection);
 		})
 		manager.on('disconnected', function(remote) {
-			console.log("Disconnected from", remote.host);
+			context.emit('disconnect', remote, manager.retries, manager.error, manager.failed)
 		})
 		manager.attempt();
 	})
@@ -76,8 +75,7 @@ var InstaDeploy = function (remoteArray, options) {
 		for(var name in context.clientInstances) { 
 			parallelExecutionArray.push(function(callback){
 				if(context.clientInstances[name]) context.clientInstances[name].upload(file.localPath, file.remotePath, function(error){
-					if(!error) console.log("UPLOADED", file);
-					callback();
+					callback(error);
 				});
 				else callback(new Error("Connection instance not found!"));
 			});
@@ -103,19 +101,24 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 				}, context.options.queueTime || 3000);
 				/* Implement a rename function */
 				context.smartQueueList.push({ localPath: directPath, remotePath: path.join(remotePath, relativePath), callback: function(error){
-					if(!error) console.log("DONE", directPath, path.join(remotePath, relativePath));
+					if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
+					else context.emit('failed', error, directoryPath, path.join(remotePath, relativePath));
 				}});
 			});
+		}else{
+			context.emit('ignored', 'file', directPath, relativePath, context.options.ignoreFiles);
 		}
 	}, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
 		// DIRECTORY FUNCTION
 		// IF NO MATCH INCLUDE FOLDER
 		if(!matchMaker(relativePath, context.options.ignoreFolders || ['.git', 'node_modules'])) {
 			callback();
+		}else{
+			context.emit('ignored', 'folder', directPath, relativePath, context.options.ignoreFolders);
 		}
 	}, function WALKER_DONE() {
-		// DONE FUNCTION
-		
+		// READY FUNCTION
+		context.emit('watching', directoryPath, remotePath);
 	})
 }
 
