@@ -1,3 +1,5 @@
+var eventEmmiter = require('events').EventEmitter;
+var util = require('util');
 var path = require('path');
 var walker = require('./src/walk.js');
 var watcher = require('./src/watch.js');
@@ -82,7 +84,11 @@ var InstaDeploy = function (remoteArray, options) {
 		}
 		async.parallelLimit(parallelExecutionArray, context.options.maxConcurrentConnections || 5, callback);
 	}, context.options.maxConcurrentFiles || 10);
+	
+	eventEmmiter.call(this);
 }
+
+util.inherits(InstaDeploy, eventEmmiter);
 
 InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	var context = this;
