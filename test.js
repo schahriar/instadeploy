@@ -4,6 +4,7 @@ var path = require("path");
 var chai = require("chai");
 var InstaDeploy = require("./instadeploy.js");
 var inspect = require("util").inspect;
+var mkdirp = require('mkdirp');
 
 // Automatically track and cleanup temp files at exit (causes an error after fs.mkdir)
 // temp.track();
@@ -104,7 +105,8 @@ var Deployer = new InstaDeploy([
     privateKey: KEY
   }
 ], {
-    ignoreFiles: ['.gitignore', '.git', 'node_modules']
+    queueTime: 100,
+    ignore: ['node_modules\\**', '.gitignore']
   });
 
 /* DEBUG
@@ -148,7 +150,7 @@ describe('Test Suite', function(){
   })
   it("Should Create Directories", function(done){
     var filePath = 'dir/newTest.js';
-    fs.mkdirSync(path.resolve(directory, 'dir'));
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloWorld2', function(error) {
       if(error) return done(error);
       Deployer.once('uploaded', function () {
@@ -156,6 +158,40 @@ describe('Test Suite', function(){
         done();
       })
     })
-    
+  })
+  it("Should Allow for Directory Nesting", function(done){
+    var filePath = 'src/test/new/nested/index.js';
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
+      if(error) return done(error);
+      Deployer.once('uploaded', function () {
+        expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloFromFakeNodeModule');
+        done();
+      })
+    })
+  })
+  it("Should Ignore Matching Directories", function(done){
+    /* Make Paths with OS Delimiter */
+    var filePath = 'node_modules\\test\\index.js';
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
+      if(error) return done(error);
+      Deployer.once('ignored', function (absolute, relative) {
+        expect(relative).to.equal(path.dirname(filePath));
+        done();
+      })
+    })
+  })
+  it("Should Ignore Matching Root Directory Files", function(done){
+    /* Make Paths with OS Delimiter */
+    var filePath = '.gitignore';
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
+      if(error) return done(error);
+      Deployer.once('ignored', function (absolute, relative) {
+        expect(relative).to.equal(filePath);
+        done();
+      })
+    })
   })
 });

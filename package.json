@@ -33,6 +33,7 @@
   "devDependencies": {
     "chai": "^3.3.0",
     "keypair": "^1.0.0",
+    "mkdirp": "^0.5.1",
     "mocha": "^2.3.3",
     "ssh2": "^0.4.11",
     "temp": "^0.8.3"
