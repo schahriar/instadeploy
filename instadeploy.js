@@ -3,7 +3,6 @@ var util = require('util');
 var path = require('path');
 var Watcher = require('./src/watch.js');
 var ConnectionManager = require('./src/connectionManager.js');
-var minimatch = require("minimatch");
 var async = require('async');
 var uniq = require('lodash.uniq');
 var crypto = require('crypto');
@@ -15,15 +14,6 @@ function randomValueHex(len) {
         .slice(0,len);   // return required number of characters
 }
 
-function matchMaker(base, patterns) {
-	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
-	var doesMatch = false;
-	patterns.forEach(function(pattern){
-		doesMatch = ((doesMatch) && (pattern[0] !== '!'))?doesMatch:minimatch(base, pattern);
-	});
-	return doesMatch;
-}
-
 var InstaDeploy = function (remoteArray, options) {
 	var context = this;
 
@@ -33,8 +23,7 @@ var InstaDeploy = function (remoteArray, options) {
 		maxConcurrentConnections:   <Number> 5,
 		maxConcurrentFiles:         <Number> 10,
 		queueTime:                  <Time:MS> 1500,
-		ignoreFolders:              <Array> ['.git', 'node_modules'],
-		ignoreFiles:                <Array> ['.gitignore']
+		ignore:                     <Array> ['.git', 'node_modules']
 	
 	*/
 	context.options = options || {};
@@ -89,16 +78,18 @@ util.inherits(InstaDeploy, eventEmmiter);
 
 InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	var context = this;
-	Watcher(directoryPath, remotePath, function FILE_ON_CHANGE(PATH, directory, remote) {
+	Watcher(directoryPath, remotePath, context.options.ignore || ['.git/**', 'node_modules/**'], function FILE_ON_CHANGE(PATH, directory, remote) {
 		clearTimeout(context.smartQueueTimeFrame);
 		context.smartQueueTimeFrame = setTimeout(function(){
 			context.smartQueueFlush();
-		}, context.queueTime || 1500);
+		}, context.options.queueTime || 1500);
 		/* Implement a rename function */
 		context.smartQueueList.push({ localPath: PATH, remotePath: path.join(remote, path.relative(directory, PATH)), callback: function(error) {
 			if(!error) context.emit('uploaded', null, directoryPath);
 			else context.emit('failed', error, directoryPath);
 		}});
+	}, function FILE_ON_IGNORED(absolute, relative) {
+		context.emit('ignored', absolute, relative);
 	});
 }
 
