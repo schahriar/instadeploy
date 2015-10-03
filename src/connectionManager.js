@@ -24,14 +24,20 @@ ConnectionManger.prototype.connect = function Connection_Manger_Attempt_Init() {
 
 ConnectionManger.prototype.ErrorHandler = function Connection_Manger_Error_Handler(error) {
 	var _this = this;
+	// If an error is present handle it
 	if(error) {
+		// If Connection retries are less than max retries re-attempt
+		// Otherwise consider Connection as failed
 		if (_this.retries <= 10) {
+			// Attempt timeout
 			_this.timeout = setTimeout(function(){
+				// Emit disconnected event
 				_this.emit('disconnected', _this.remote, _this);
 				_this.connected = false;
 				_this.error = error;
 				_this.retries++;
 				clearTimeout(_this.timeout);
+				// Re-attempt
 				_this.AttemptConnection();
 			}, 1000);
 		}else{
@@ -45,6 +51,8 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 	var _this = this;
 	// Connect to Server
 	_this.emit('attempting', _this.remote, _this);
+	// If Connection is already initialized attempt reconnection
+	// Otherwise initialize Connection
 	if(!init) {
 		_this.connection.sftp(function(error){
 			_this.ErrorHandler.apply(_this, arguments) 
@@ -57,6 +65,7 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 			password: _this.remote.password,
 			privateKey: _this.remote.privateKey
 		});
+		// Handle Initial Connection
 		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });
 		// Reset on connection
 		_this.connection.on('ready', function() {
@@ -68,6 +77,7 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 		// Try to reconnect
 		_this.connection.on('error', _this.ErrorHandler);
 		_this.connection.on('end', function() {
+			/* ShouldClose is not implemented */
 			if(!_this.shouldClose) _this.ErrorHandler(true);
 		});
 		_this.connection.on('close', function() {
