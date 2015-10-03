@@ -2,14 +2,6 @@ var minimatch = require("minimatch");
 var chokidar = require('chokidar');
 var path = require('path');
 
-function multiReg (patterns) {
-	var expressions = [];
-	patterns.forEach(function(pattern) {
-		expressions = minimatch.makeRe(pattern);
-	})
-	return expressions;
-}
-
 function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
 	var doesMatch = false;
