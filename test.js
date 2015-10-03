@@ -195,3 +195,18 @@ describe('Test Suite', function(){
     })
   })
 });
+
+describe('Deploy Test Suite', function(){
+  this.timeout(5500);
+  var directory = temp.mkdirSync('InstaDeployTest2');
+  it('Should Copy All Files on Initial Connection', function(done) {
+    var filePath = 'src/test.js';
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
+    fs.writeFileSync(path.join(directory, filePath), 'test');
+    Deployer.once('uploaded', function () {
+      expect(STORE_BUFFERS['test2/'+filePath].data).to.equal('test');
+      done();
+    })
+    Deployer.watch(directory, './test2');
+  })
+})

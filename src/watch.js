@@ -1,6 +1,7 @@
 var minimatch = require("minimatch");
 var chokidar = require('chokidar');
 var path = require('path');
+var walk = require('./walk.js');
 
 function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
@@ -13,7 +14,10 @@ function matchMaker(base, patterns) {
 }
 
 var watcher = function(directory, remote, ignorePatterns, callback, ignoredCallback) {
-	/* Implement Minimatch Ignoring */
+	// Walk & Upload All files on INIT
+	walk(directory, function(error, directPath, relativePath, Stats) {
+		callback(directPath, directory, remote);
+	})
 	// Initialize watcher
 	chokidar.watch(directory, {
 		ignored: function(PATH) {
