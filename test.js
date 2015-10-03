@@ -106,6 +106,8 @@ var Deployer = new InstaDeploy([
 ], {
     ignoreFiles: ['.gitignore', '.git', 'node_modules']
   });
+
+/* DEBUG
 Deployer.on('connect', function (remote) {
   console.log("::CLIENT::", "Connected to", remote.host)
 })
@@ -121,6 +123,7 @@ Deployer.on('uploaded', function () {
 Deployer.on('uploadStarted', function () {
   console.log("::CLIENT::", "Upload Started", arguments);
 })
+*/
 
 
 

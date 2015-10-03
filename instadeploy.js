@@ -46,7 +46,6 @@ var InstaDeploy = function (remoteArray, options) {
 	
 	context.smartQueueFlush = function() {
 		// Remove Duplicates (reverse to select from the end)
-		console.log(context.smartQueueList)
 		uniq(context.smartQueueList.reverse(), 'remotePath').forEach(function(item) {
 			context.queue.push(item, item.callback);
 			context.emit('uploadStarted', item);
