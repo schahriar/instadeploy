@@ -1,6 +1,6 @@
 {
   "name": "instadeploy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Instantly Deploy a folder to multiple servers",
   "main": "instadeploy.js",
   "scripts": {
@@ -25,6 +25,7 @@
   "homepage": "https://github.com/schahriar/instadeploy#readme",
   "dependencies": {
     "async": "^1.4.2",
+    "chokidar": "^1.2.0",
     "lodash.uniq": "^3.2.2",
     "minimatch": "^3.0.0",
     "scp2": "0.1.0-b1"

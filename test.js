@@ -5,8 +5,8 @@ var chai = require("chai");
 var InstaDeploy = require("./instadeploy.js");
 var inspect = require("util").inspect;
 
-// Automatically track and cleanup temp files at exit
-temp.track();
+// Automatically track and cleanup temp files at exit (causes an error after fs.mkdir)
+// temp.track();
 
 var should = chai.should();
 var expect = chai.expect;
@@ -67,6 +67,10 @@ new ssh2.Server({
         // see: https://github.com/mscdex/ssh2-streams/blob/master/SFTPStream.md
         var sftpStream = accept();
         sftpStream.on('STAT', function(reqid){
+          return sftpStream.status(reqid, STATUS_CODE.OK);
+        })
+        sftpStream.on('MKDIR', function(reqid){
+          console.log("MKDIR", arguments);
           return sftpStream.status(reqid, STATUS_CODE.OK);
         })
         sftpStream.on('OPEN', function (reqid, filename, flags, attrs) {
@@ -133,10 +137,22 @@ describe('Test Suite', function(){
     var fileName = 'test.js';
     fs.writeFile(path.join(directory, fileName), 'HelloWorld', function(error) {
       if(error) return done(error);
-      Deployer.on('uploaded', function () {
+      Deployer.once('uploaded', function () {
         expect(STORE_BUFFERS['test/'+fileName].data).to.equal('HelloWorld');
         done();
       })
     })
+  })
+  it("Should Create Directories", function(done){
+    var filePath = 'dir/newTest.js';
+    fs.mkdirSync(path.resolve(directory, 'dir'));
+    fs.writeFile(path.join(directory, filePath), 'HelloWorld2', function(error) {
+      if(error) return done(error);
+      Deployer.once('uploaded', function () {
+        expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloWorld2');
+        done();
+      })
+    })
+    
   })
 });

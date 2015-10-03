@@ -1,7 +1,6 @@
 var eventEmmiter = require('events').EventEmitter;
 var util = require('util');
 var path = require('path');
-var walker = require('./src/walk.js');
 var Watcher = require('./src/watch.js');
 var ConnectionManager = require('./src/connectionManager.js');
 var minimatch = require("minimatch");
@@ -47,6 +46,7 @@ var InstaDeploy = function (remoteArray, options) {
 	
 	context.smartQueueFlush = function() {
 		// Remove Duplicates (reverse to select from the end)
+		console.log(context.smartQueueList)
 		uniq(context.smartQueueList.reverse(), 'remotePath').forEach(function(item) {
 			context.queue.push(item, item.callback);
 			context.emit('uploadStarted', item);
@@ -88,37 +88,19 @@ var InstaDeploy = function (remoteArray, options) {
 
 util.inherits(InstaDeploy, eventEmmiter);
 
-/*
-if(!matchMaker(relativePath, context.options.ignoreFiles || ['.gitignore'])) {
-			watcher.watch({ direct: directPath, directory: directoryPath, relative: relativePath, remote: remotePath }, function FILE_ON_UPLOAD(error) {
-				if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
-				else context.emit('failed', error, directoryPath, path.join(remotePath, relativePath));
-			});
-		}else{
-			context.emit('ignored', 'file', directPath, relativePath, context.options.ignoreFiles);
-		}
-*/
-
 InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	var context = this;
-	var watcher = new Watcher(matchMaker, context.options.ignoreFiles || ['.gitignore'], context.smartQueueList, context.smartQueueTimeFrame, context.smartQueueFlush, context.options.queueTime || 1500);
-	walker(directoryPath, function WALKER_ON_DIRECTORY(error, directPath, relativePath, callback) {
-		// DIRECTORY FUNCTION
-		// IF NO MATCH INCLUDE FOLDER
-		/* ADD DIRECTORY WATCH FOR NEW FILES */
-		if(!matchMaker(relativePath, context.options.ignoreFolders || ['.git', 'node_modules'])) {
-			watcher.watch({ direct: directPath, directory: directoryPath, relative: relativePath, remote: remotePath }, true, function FILE_ON_NEW_UPLOAD(error) {
-				if(!error) context.emit('uploaded', directoryPath, path.join(remotePath, relativePath));
-				else context.emit('failed', error, directoryPath, path.join(remotePath, relativePath));
-			});
-			callback();
-		}else{
-			context.emit('ignored', 'folder', directPath, relativePath, context.options.ignoreFolders);
-		}
-	}, function WALKER_DONE() {
-		// READY FUNCTION
-		context.emit('watching', directoryPath, remotePath);
-	})
+	Watcher(directoryPath, remotePath, function FILE_ON_CHANGE(PATH, directory, remote) {
+		clearTimeout(context.smartQueueTimeFrame);
+		context.smartQueueTimeFrame = setTimeout(function(){
+			context.smartQueueFlush();
+		}, context.queueTime || 1500);
+		/* Implement a rename function */
+		context.smartQueueList.push({ localPath: PATH, remotePath: path.join(remote, path.relative(directory, PATH)), callback: function(error) {
+			if(!error) context.emit('uploaded', null, directoryPath);
+			else context.emit('failed', error, directoryPath);
+		}});
+	});
 }
 
 module.exports = InstaDeploy;
