@@ -199,6 +199,7 @@ describe('Test Suite', function(){
 describe('Deploy Test Suite', function(){
   this.timeout(5500);
   var directory = temp.mkdirSync('InstaDeployTest2');
+  var directory2 = temp.mkdirSync('InstaDeployTest3');
   it('Should Copy All Files on Initial Connection', function(done) {
     var filePath = 'src/test.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
@@ -208,5 +209,15 @@ describe('Deploy Test Suite', function(){
       done();
     })
     Deployer.watch(directory, './test2');
+  })
+  it('Should Ignore Matching Files on Initial Connection', function(done) {
+    var filePath = 'node_modules\\test\\test.js';
+    mkdirp.sync(path.dirname(path.join(directory2, filePath)));
+    fs.writeFileSync(path.join(directory2, filePath), 'test');
+    Deployer.once('ignored', function (absolute, relative) {
+      expect(relative).to.equal(path.dirname(filePath));
+      done();
+    })
+    Deployer.watch(directory2, './test3');
   })
 })

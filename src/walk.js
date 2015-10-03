@@ -13,7 +13,6 @@ function asyncWalk(directoryPaths, fileCallback, directoryCallback, doneCallback
 	}
 	fs.readdir(directoryPath, function(error, files) {
 		if (error) return fileCallback(error);
-		console.log(files)
 		files.forEach(function(name) {
 			execArray.push(function(callback) {
 				var directPath = path.resolve(directoryPath, name);

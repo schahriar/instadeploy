@@ -16,7 +16,7 @@ function matchMaker(base, patterns) {
 var watcher = function(directory, remote, ignorePatterns, callback, ignoredCallback) {
 	// Walk & Upload All files on INIT
 	walk(directory, function(error, directPath, relativePath, Stats) {
-		callback(directPath, directory, remote);
+		if(matchMaker(path.relative(directory, directPath), ignorePatterns)) callback(directPath, directory, remote);
 	})
 	// Initialize watcher
 	chokidar.watch(directory, {
