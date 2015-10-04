@@ -181,7 +181,6 @@ var tasks = {
             var Deployer = new InstaDeploy(CONFIG.hosts, {
                 ignore: CONFIG.ignore || [],
                 maxConcurrentConnections: argv.maxconnections,
-                maxConcurrentFiles: argv.maxfiles,
                 queueTime: argv.queuetime
             })
             Deployer.watch(argv._[1] || './', argv._[2] || './');
@@ -195,7 +194,7 @@ var tasks = {
                 console.log("::INSTADEPLOY::", "Disconnected from", remote.host)
             })
             Deployer.on('failed', function (error, PATH) {
-                console.error("::INSTADEPLOY::", "Upload Failed", '"' + PATH + '"')
+                console.error("::INSTADEPLOY::", "Upload Failed", '"' + PATH + '"', "->", error)
             })
             Deployer.on('drain', function () {
                 console.log("::INSTADEPLOY::", "Files Uploaded")
