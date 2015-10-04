@@ -21,7 +21,7 @@ var InstaDeploy = function (remoteArray, options) {
 		OPTIONS
 		▬▬▬▬▬▬▬
 		maxConcurrentConnections:   <Number> 5,
-		maxConcurrentFiles:         <Number> 10,
+		maxConcurrentFiles:         <Number> 1, (BUGGED)
 		queueTime:                  <Time:MS> 1500,
 		ignore:                     <Array> ['.git', 'node_modules']
 	
@@ -83,7 +83,7 @@ var InstaDeploy = function (remoteArray, options) {
 		// Else run the Async Parallel with a given limit
 		if(parallelExecutionArray.length <= 0) callback(new Error("No Connections found!"));
 		else async.parallelLimit(parallelExecutionArray, context.options.maxConcurrentConnections || 5, callback);
-	}, context.options.maxConcurrentFiles || 10);
+	}, context.options.maxConcurrentFiles || 1);
 	context.queue.drain = function() {
 		context.emit('drain');
 	}
