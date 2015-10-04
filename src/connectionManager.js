@@ -63,7 +63,7 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 			host: _this.remote.host,
 			username: _this.remote.username,
 			password: _this.remote.password,
-			privateKey: _this.remote.privateKey
+			privateKey: (_this.remote.privateKey.length > 0)?_this.remote.privateKey:undefined
 		});
 		// Handle Initial Connection
 		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });

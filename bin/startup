@@ -1,0 +1,251 @@
+#!/usr/bin/env node
+
+'use strict';
+
+process.title = 'instadeploy';
+
+var argv = require('minimist')(process.argv.slice(2));
+var herb = require('herb');
+var fs = require('fs');
+var path = require('path');
+var inquirer = require("inquirer");
+var InstaDeploy = require("../instadeploy");
+var DefaultConfig = { ignore: [], hosts: [] }
+
+function SetConfig(PATH, CONFIG, callback) {
+    var FILE = path.resolve(PATH || './', '.instadeploy');
+    fs.writeFile(FILE, JSON.stringify(CONFIG, null, "\t"), function(error) {
+        if(error) return callback(error);
+        callback(null, CONFIG);
+    })
+}
+
+function GetConfig(PATH, callback) {
+    var FILE = path.resolve(PATH || './', '.instadeploy');
+    fs.readFile(FILE, function(error, data){
+        if(error) {
+            SetConfig(PATH, DefaultConfig, callback);
+        }else{
+            try {
+                var ConfigData = JSON.parse(data.toString('utf8'));
+                callback(null, ConfigData);
+            }catch(e) {
+                SetConfig(PATH, DefaultConfig, callback);
+            }
+        }
+    })
+}
+
+var tasks = {
+    add: {
+        description: "ADDING|ADDS| REMOTE HOST FOR SYNCING",
+        category: "setup",
+        FUNC: function(argv, CONFIG) {
+            inquirer.prompt(
+                [
+                    {
+                        type: "input",
+                        name: "name",
+                        default: argv._[1],
+                        message: "A Unique Name for the Host:"
+                    },
+                    {
+                        type: "input",
+                        name: "host",
+                        default: argv._[2],
+                        message: "SFTP Host Address: (IP Address)"
+                    },
+                    {
+                        type: "input",
+                        name: "port",
+                        default: 22,
+                        message: "SFTP Port:"
+                    },
+                    {
+                        type: "input",
+                        name: "username",
+                        default: argv._[3],
+                        message: "SFTP Username for Host:"
+                    },
+                    {
+                        type: "password",
+                        name: "password",
+                        default: argv._[4],
+                        message: "SFTP Password for Host:"
+                    },
+                    {
+                        type: "input",
+                        name: "privateKey",
+                        default: argv._[5],
+                        message: "Absolute Path to SFTP Private Key: (if any)"
+                    }
+                ]
+            , function(answers) {
+                for(var i=0; i<CONFIG.hosts.length; i++) {
+                    if(CONFIG.hosts[i].name === answers.name) {
+                        return herb.warn("Unique Name already exists. Please remove using instadeploy remove or provide another name.")
+                    }
+                }
+                CONFIG.hosts.push(answers);
+                SetConfig(null, CONFIG, function(error){
+                    if(error) throw error;
+                    herb.marker({color:'green'}).log("HOST ADDED SUCCESSFULLY");
+                })
+            });
+        }
+    },
+    remove: {
+        description: "REMOVING|REMOVES| REMOTE HOST FOR SYNCING",
+        category: "setup",
+        FUNC: function(argv, CONFIG) {
+            function handle (answers) {
+                var FOUND = false;
+                var NEWHOSTS = [];
+                for(var i=0; i<CONFIG.hosts.length; i++) {
+                    if(CONFIG.hosts[i].name !== answers.name) {
+                        NEWHOSTS.push(CONFIG.hosts[i]);
+                    }else{
+                        FOUND = true;
+                    }
+                }
+                if(!FOUND) {
+                    return herb.warn("No Host matching the unique name found! Please try selecting one instead.");
+                }
+                CONFIG.hosts = NEWHOSTS;
+                SetConfig(null, CONFIG, function(error){
+                    if(error) throw error;
+                    herb.marker({color:'green'}).log("HOST REMOVED SUCCESSFULLY");
+                })
+            }
+            var NAMES = [];
+            for(var i=0; i<CONFIG.hosts.length; i++) {
+                NAMES.push(CONFIG.hosts[i].name);
+            }
+            if(NAMES.length <= 0) return herb.warn("No Hosts found, Add one using instadeploy add")
+            inquirer.prompt([
+                {
+                    type: "list",
+                    name: "name",
+                    message: "Which Host would you like to remove?",
+                    choices: NAMES
+                }
+            ], handle);
+        }
+    },
+    ignore: {
+        description: "IGNORING|IGNORES| FILES/DIRECTORIES MATCHING GIVEN PATTERNS",
+        category: "setup",
+        FUNC: function(argv, CONFIG) {
+            for(var i=1; i<argv._.length; i++) {
+                CONFIG.ignore.unshift(argv._[i]);
+            }
+            SetConfig(null, CONFIG, function(error){
+                if(error) throw error;
+                herb.marker({color:'green'}).log("PATTERNS IGNORED SUCCESSFULLY");
+            })
+        }
+    },
+    allow: {
+        description: "REVERSING|REVERSES| IGNORED PATTERN",
+        category: "setup",
+        FUNC: function(argv, CONFIG) {
+            inquirer.prompt([
+                {
+                    type: "list",
+                    name: "reverse",
+                    message: "Which patterns would you like to remove?",
+                    choices: CONFIG.ignore || []
+                }
+            ], function (answers) {
+                var NEWIGNORE = [];
+                for(var i=0; i<CONFIG.ignore.length; i++) {
+                    if(answers.reverse.indexOf(CONFIG.ignore[i]) === -1) {
+                        NEWIGNORE.push(CONFIG.ignore[i]);
+                    }
+                }
+                CONFIG.ignore = NEWIGNORE;
+                SetConfig(null, CONFIG, function(error){
+                    if(error) throw error;
+                    herb.marker({color:'green'}).log("PATTERN REMOVED SUCCESSFULLY");
+                })
+            });
+        }
+    },
+    watch: {
+        description: "WATCHING|WATCHES| CURRENT DIRECTORY FOR CHANGES",
+        category: "exec",
+        FUNC: function(argv, CONFIG) {
+            if(!CONFIG.hosts) {
+                return herb.warn("No Host Found. Please add one using instadeploy add command");
+            }
+            var Deployer = new InstaDeploy(CONFIG.hosts, {
+                ignore: CONFIG.ignore || [],
+                maxConcurrentConnections: argv.maxconnections,
+                maxConcurrentFiles: argv.maxfiles,
+                queueTime: argv.queuetime
+            })
+            Deployer.watch(argv._[1] || './', argv._[2] || './');
+            Deployer.on('attempt', function (remote) {
+                console.log("::INSTADEPLOY::", "Attempting Connection to", remote.name, '@', remote.host)
+            })
+            Deployer.on('connect', function (remote) {
+                console.log("::INSTADEPLOY::", "Connected to", remote.host)
+            })
+            Deployer.on('disconnect', function (remote) {
+                console.log("::INSTADEPLOY::", "Disconnected from", remote.host)
+            })
+            Deployer.on('failed', function () {
+                console.log("::INSTADEPLOY::", "Failed Upload", arguments)
+            })
+        }
+    }
+}
+
+function verbalize(string, isVerb) {
+    return (isVerb) ? string.split('|')[0] + string.split('|')[2] : string.split('|')[1] + string.split('|')[2]
+}
+
+function pad(width, string, padding) {
+  return (width <= string.length) ? string : pad(width, string + padding, padding)
+}
+
+function capitalizeFirstLetter(string) {
+    return string.replace(/\b./g, function(m){ return m.toUpperCase(); });
+}
+
+if (
+    (argv._[0] !== undefined) &&
+    (tasks[argv._[0].toLowerCase()] !== undefined) &&
+    (argv._[0].constructor === String) &&
+    (argv._[0].substring(0, 1) !== '-') &&
+    (argv._[0] !== 'help') &&
+    (tasks[argv._[0].toLowerCase()].FUNC.constructor === Function)
+) {
+    console.log("TASK INITIATED:", verbalize(tasks[argv._[0].toLowerCase()].description, true) + " ...");
+    GetConfig(argv.path, function(error, CONFIG) {
+        if(error) throw error;
+        else tasks[argv._[0].toLowerCase()].FUNC(argv, CONFIG);
+    })
+} else if ((argv._[0] === '--help') || (argv._[0] === '-h') || (argv._[0] === 'help')) {
+    var categories = new Object;
+    // Sort tasks into their categories
+    for(var command in tasks) {
+        var task = tasks[command];
+        if(!categories[task.category]) categories[task.category] = new Array;
+        categories[task.category].push({ command: command, get: task})
+    }
+    herb.marker({ color: 'dim' }).line(' - ');
+    for(var category in categories) {
+        var tasks = categories[category];
+		herb.marker({ color: 'cyan' }).group(capitalizeFirstLetter(category));
+        for(var i=0; i<tasks.length; i++) {
+            var task = tasks[i];
+            herb.marker({ color: 'white' }).log(pad(7-task.command.length, task.command, ' '), "\t", verbalize(task.get.description, false));
+        }
+		herb.groupEnd();
+        herb.marker({ color: 'dim' }).line('_');
+    }
+    
+} else {
+    console.log("COMMAND NOT FOUND", "\r\nType", 'instadeploy help', 'for more info.');
+}

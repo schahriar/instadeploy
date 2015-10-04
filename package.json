@@ -1,10 +1,14 @@
 {
   "name": "instadeploy",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Instantly Deploy a folder to multiple servers",
   "main": "instadeploy.js",
   "scripts": {
     "test": "mocha ./test.js"
+  },
+  "bin": {
+    "instadeploy": "bin/startup",
+    "deploy": "bin/startup"
   },
   "repository": {
     "type": "git",
@@ -26,9 +30,12 @@
   "dependencies": {
     "async": "^1.4.2",
     "chokidar": "^1.2.0",
+    "herb": "^2.2.6",
+    "inquirer": "^0.10.1",
     "lodash.uniq": "^3.2.2",
     "minimatch": "^3.0.0",
-    "scp2": "0.1.0-b1"
+    "minimist": "^1.2.0",
+    "scp2": "^0.2.2"
   },
   "devDependencies": {
     "chai": "^3.3.0",
