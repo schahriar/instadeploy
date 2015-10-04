@@ -16,6 +16,8 @@ function matchMaker(base, patterns) {
 }
 
 var watcher = function(directory, remote, ignorePatterns, callback, ignoredCallback) {
+	// Resolve Directory to Absolute Path
+	directory = path.resolve(directory);
 	// Walk & Upload All files on INIT
 	walk(directory, function(error, directPath, relativePath, Stats) {
 		if(matchMaker(path.relative(directory, directPath), ignorePatterns)) callback(directPath, directory, remote);
