@@ -1,6 +1,8 @@
 var eventEmmiter = require('events').EventEmitter;
 var util = require('util');
 var Client = require('scp2').Client;
+var fs = require('fs');
+var path = require('path');
 
 var ConnectionManger = function Connection_Manger_Init(remote) {
 	this.retries = 0;
@@ -63,7 +65,7 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 			host: _this.remote.host,
 			username: _this.remote.username,
 			password: _this.remote.password,
-			privateKey: (_this.remote.privateKey.length > 0)?_this.remote.privateKey:undefined
+			privateKey: (_this.remote.privateKey.length > 0)?fs.readFileSync(path.resolve(_this.remote.privateKey)):undefined
 		});
 		// Handle Initial Connection
 		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });
