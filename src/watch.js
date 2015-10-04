@@ -7,6 +7,8 @@ function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
 	// Minimatch multiple patterns
 	var doesMatch = false;
+	// Always ignore instadeploy files
+	patterns.push('**/.instadeploy');
 	patterns.forEach(function(pattern){
 		doesMatch = ((doesMatch) && (pattern[0] !== '!'))?doesMatch:minimatch(base, pattern);
 	});

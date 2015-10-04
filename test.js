@@ -105,7 +105,7 @@ var Deployer = new InstaDeploy([
     privateKey: KEY
   }
 ], {
-    queueTime: 100,
+    queueTime: 10,
     ignore: ['node_modules\\**', '.gitignore']
   });
 
@@ -166,6 +166,18 @@ describe('Test Suite', function(){
       if(error) return done(error);
       Deployer.once('uploaded', function () {
         expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloFromFakeNodeModule');
+        done();
+      })
+    })
+  })
+  it("Should Ignore .instadeploy file", function(done){
+    /* Make Paths with OS Delimiter */
+    var filePath = 'test\\.instadeploy';
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
+      if(error) return done(error);
+      Deployer.once('ignored', function (absolute, relative) {
+        expect(path.basename(relative)).to.equal(path.basename(filePath));
         done();
       })
     })
