@@ -197,6 +197,9 @@ var tasks = {
             Deployer.on('failed', function (error, PATH) {
                 console.error("::INSTADEPLOY::", "Upload Failed", '"' + PATH + '"')
             })
+            Deployer.on('drain', function () {
+                console.log("::INSTADEPLOY::", "Files Uploaded")
+            })
         }
     }
 }
