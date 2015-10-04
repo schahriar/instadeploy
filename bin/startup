@@ -194,8 +194,8 @@ var tasks = {
             Deployer.on('disconnect', function (remote) {
                 console.log("::INSTADEPLOY::", "Disconnected from", remote.host)
             })
-            Deployer.on('failed', function () {
-                console.log("::INSTADEPLOY::", "Failed Upload", arguments)
+            Deployer.on('failed', function (error, PATH) {
+                console.error("::INSTADEPLOY::", "Upload Failed", '"' + PATH + '"')
             })
         }
     }
