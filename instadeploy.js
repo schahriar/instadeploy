@@ -84,6 +84,9 @@ var InstaDeploy = function (remoteArray, options) {
 		if(parallelExecutionArray.length <= 0) callback(new Error("No Connections found!"));
 		else async.parallelLimit(parallelExecutionArray, context.options.maxConcurrentConnections || 5, callback);
 	}, context.options.maxConcurrentFiles || 10);
+	context.queue.drain = function() {
+		context.emit('drain');
+	}
 	// EventEmitter
 	eventEmmiter.call(this);
 }
