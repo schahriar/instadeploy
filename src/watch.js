@@ -20,7 +20,7 @@ var watcher = function(directory, remote, ignorePatterns, callback, ignoredCallb
 	directory = path.resolve(directory);
 	// Walk & Upload All files on INIT
 	walk(directory, function(error, directPath, relativePath, Stats) {
-		if(matchMaker(path.relative(directory, directPath), ignorePatterns)) callback(directPath, directory, remote);
+		if(!matchMaker(path.relative(directory, directPath), ignorePatterns)) callback(directPath, directory, remote);
 	})
 	// Initialize watcher
 	chokidar.watch(directory, {
