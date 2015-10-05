@@ -85,7 +85,10 @@ var InstaDeploy = function (remoteArray, options) {
 		else async.parallelLimit(parallelExecutionArray, context.options.maxConcurrentConnections || 5, callback);
 	}, context.options.maxConcurrentFiles || 1);
 	context.queue.drain = function() {
-		context.emit('drain');
+		context.emit('start');
+	}
+	context.queue.saturated = function() {
+		context.emit('end');
 	}
 	// EventEmitter
 	eventEmmiter.call(this);
