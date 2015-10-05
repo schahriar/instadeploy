@@ -210,7 +210,7 @@ var tasks = {
                 console.log("::INSTADEPLOY::", "Upload Started")
             })
             Deployer.on('end', function () {
-                console.log("::INSTADEPLOY::", "Files Uploaded")
+                console.log("::INSTADEPLOY::", "Upload Done")
             })
         }
     }
