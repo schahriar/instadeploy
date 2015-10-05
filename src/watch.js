@@ -1,7 +1,6 @@
 var minimatch = require("minimatch");
 var chokidar = require('chokidar');
 var path = require('path');
-var walk = require('./walk.js');
 
 function matchMaker(base, patterns) {
 	// Inspired by https://github.com/joshwnj/minimatch-all/blob/master/index.js
