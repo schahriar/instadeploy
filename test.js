@@ -67,10 +67,10 @@ new ssh2.Server({
         // `sftpStream` is an `SFTPStream` instance in server mode
         // see: https://github.com/mscdex/ssh2-streams/blob/master/SFTPStream.md
         var sftpStream = accept();
-        sftpStream.on('STAT', function(reqid){
+        sftpStream.on('STAT', function (reqid) {
           return sftpStream.status(reqid, STATUS_CODE.OK);
         })
-        sftpStream.on('MKDIR', function(reqid){
+        sftpStream.on('MKDIR', function (reqid) {
           console.log("MKDIR", arguments);
           return sftpStream.status(reqid, STATUS_CODE.OK);
         })
@@ -127,79 +127,77 @@ Test.on('uploadStarted', function () {
 })
 */
 
-
-
-describe('Test Suite', function(){
+describe('Test Suite', function () {
   var directory = temp.mkdirSync('InstaDeployTest');
   this.timeout(5500);
   Test.watch(directory, './test');
-	it("Should Connect To SFTP", function(done){
+  it("Should Connect To SFTP", function (done) {
     Test.on('connect', function (remote) {
       done();
     })
-	})
-  it("Should Upload Files", function(done){
+  })
+  it("Should Upload Files", function (done) {
     var fileName = 'test.js';
-    fs.writeFile(path.join(directory, fileName), 'HelloWorld', function(error) {
-      if(error) return done(error);
+    fs.writeFile(path.join(directory, fileName), 'HelloWorld', function (error) {
+      if (error) return done(error);
       Test.once('uploaded', function () {
-        expect(STORE_BUFFERS['test/'+fileName].data).to.equal('HelloWorld');
+        expect(STORE_BUFFERS['test/' + fileName].data).to.equal('HelloWorld');
         done();
       })
     })
   })
-  it("Should Create Directories", function(done){
+  it("Should Create Directories", function (done) {
     var filePath = 'dir/newTest.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
-    fs.writeFile(path.join(directory, filePath), 'HelloWorld2', function(error) {
-      if(error) return done(error);
+    fs.writeFile(path.join(directory, filePath), 'HelloWorld2', function (error) {
+      if (error) return done(error);
       Test.once('uploaded', function () {
-        expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloWorld2');
+        expect(STORE_BUFFERS['test/' + filePath].data).to.equal('HelloWorld2');
         done();
       })
     })
   })
-  it("Should Allow for Directory Nesting", function(done){
+  it("Should Allow for Directory Nesting", function (done) {
     var filePath = 'src/test/new/nested/index.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
-    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
-      if(error) return done(error);
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
+      if (error) return done(error);
       Test.once('uploaded', function () {
-        expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloFromFakeNodeModule');
+        expect(STORE_BUFFERS['test/' + filePath].data).to.equal('HelloFromFakeNodeModule');
         done();
       })
     })
   })
-  it("Should Ignore .instadeploy file", function(done){
+  it("Should Ignore .instadeploy file", function (done) {
     /* Make Paths with OS Delimiter */
     var filePath = 'test\\.instadeploy';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
-    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
-      if(error) return done(error);
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
+      if (error) return done(error);
       Test.once('ignored', function (absolute, relative) {
         expect(path.basename(relative)).to.equal(path.basename(filePath));
         done();
       })
     })
   })
-  it("Should Ignore Matching Directories", function(done){
+  it("Should Ignore Matching Directories", function (done) {
     /* Make Paths with OS Delimiter */
     var filePath = 'node_modules\\test\\index.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
-    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
-      if(error) return done(error);
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
+      if (error) return done(error);
       Test.once('ignored', function (absolute, relative) {
         expect(relative).to.equal(path.dirname(filePath));
         done();
       })
     })
   })
-  it("Should Ignore Matching Root Directory Files", function(done){
+  it("Should Ignore Matching Root Directory Files", function (done) {
     /* Make Paths with OS Delimiter */
     var filePath = '.gitignore';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
-    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
-      if(error) return done(error);
+    fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
+      if (error) return done(error);
       Test.once('ignored', function (absolute, relative) {
         expect(relative).to.equal(filePath);
         done();
@@ -207,7 +205,6 @@ describe('Test Suite', function(){
     })
   })
 });
-
 
 var Deployer = new InstaDeploy([
   {
@@ -224,30 +221,30 @@ var Deployer = new InstaDeploy([
     ignore: ['node_modules\\**', '.gitignore']
   });
 
-describe('Deploy Test Suite', function(){
+describe('Deploy Test Suite', function () {
   this.timeout(5500);
   var directory = temp.mkdirSync('InstaDeployTest2');
   var directory2 = temp.mkdirSync('InstaDeployTest3');
   Deployer.watch(directory, './test2');
-  it('Should Allow for Unique Host Paths', function(done) {
+  it('Should Allow for Unique Host Paths', function (done) {
     var filePath = 'index.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFileSync(path.join(directory, filePath), 'test');
     Deployer.once('uploaded', function () {
-      expect(STORE_BUFFERS['uploads/test2/'+filePath].data).to.equal('test');
+      expect(STORE_BUFFERS['uploads/test2/' + filePath].data).to.equal('test');
       done();
     })
   })
-  it('Should Copy All Files on Initial Connection', function(done) {
+  it('Should Copy All Files on Initial Connection', function (done) {
     var filePath = 'src/test.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFileSync(path.join(directory, filePath), 'test');
     Deployer.once('uploaded', function () {
-      expect(STORE_BUFFERS['uploads/test2/'+filePath].data).to.equal('test');
+      expect(STORE_BUFFERS['uploads/test2/' + filePath].data).to.equal('test');
       done();
     })
   })
-  it('Should Ignore Matching Files on Initial Connection', function(done) {
+  it('Should Ignore Matching Files on Initial Connection', function (done) {
     var filePath = 'node_modules\\test\\test.js';
     mkdirp.sync(path.dirname(path.join(directory2, filePath)));
     fs.writeFileSync(path.join(directory2, filePath), 'test');
