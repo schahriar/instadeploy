@@ -47,7 +47,16 @@ var tasks = {
                         type: "input",
                         name: "name",
                         default: argv._[1],
-                        message: "A Unique Name for the Host:"
+                        message: "A Unique Name for the Host:",
+                        validate: function(input) {
+                            for(var i=0; i<CONFIG.hosts.length; i++) {
+                                if(CONFIG.hosts[i].name === input) {
+                                    return "Unique Name already exists. Please remove using instadeploy remove or provide another name.";
+                                }else{
+                                    return true;
+                                }
+                            }
+                        }
                     },
                     {
                         type: "input",
@@ -87,11 +96,6 @@ var tasks = {
                     }
                 ]
             , function(answers) {
-                for(var i=0; i<CONFIG.hosts.length; i++) {
-                    if(CONFIG.hosts[i].name === answers.name) {
-                        return herb.warn("Unique Name already exists. Please remove using instadeploy remove or provide another name.")
-                    }
-                }
                 CONFIG.hosts.push(answers);
                 SetConfig(null, CONFIG, function(error){
                     if(error) throw error;
