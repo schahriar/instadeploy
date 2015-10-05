@@ -89,7 +89,7 @@ var InstaDeploy = function (remoteArray, options) {
 		context.emit('end');
 	}
 	context.queue.saturated = function() {
-		context.emit('start');
+		context.emit('start', context.queue.length());
 	}
 	// EventEmitter
 	eventEmmiter.call(this);
