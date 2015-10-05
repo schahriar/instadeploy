@@ -120,7 +120,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 	}, function FILE_ON_IGNORED(absolute, relative) {
 		// -- ON FILE_IGNORED -- //
 		// Emit and ignored event
-		context.emit('ignored', absolute, relative);
+		context.emit('ignored', relative, absolute);
 	});
 }
 
