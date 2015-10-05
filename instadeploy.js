@@ -40,7 +40,7 @@ var InstaDeploy = function (remoteArray, options) {
 			// Push From TimedQueue to Async Queue
 			context.queue.push(item, item.callback);
 			// Emit an uploadStarted event
-			context.emit('uploadStarted', item);
+			context.emit('uploadStarted', item.localPath, item.relativePath, item.remotePath);
 		})
 		// Reset SmartQueue
 		context.smartQueueList = [];
@@ -112,7 +112,7 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 		}, context.options.queueTime || 1500);
 		/* Implement a rename function */
 		// Push File Data to SmartQueue
-		context.smartQueueList.push({ localPath: PATH, remotePath: path.join(remote, path.relative(directory, PATH)), callback: function(error) {
+		context.smartQueueList.push({ localPath: PATH, remotePath: path.join(remote, path.relative(directory, PATH)), relativePath: path.relative(directory, PATH), callback: function(error) {
 			// If there is no upload error emit an uploaded event otherwise emit failed with error & path
 			if(!error) context.emit('uploaded', path.relative(directory, PATH), PATH);
 			else context.emit('failed', error, path.relative(directory, PATH), PATH);
