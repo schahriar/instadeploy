@@ -174,7 +174,7 @@ describe('Test Suite', function () {
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
       if (error) return done(error);
-      Test.once('ignored', function (absolute, relative) {
+      Test.once('ignored', function (relative, absolute) {
         expect(path.basename(relative)).to.equal(path.basename(filePath));
         done();
       })
@@ -186,7 +186,7 @@ describe('Test Suite', function () {
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
       if (error) return done(error);
-      Test.once('ignored', function (absolute, relative) {
+      Test.once('ignored', function (relative, absolute) {
         expect(relative).to.equal(path.dirname(filePath));
         done();
       })
@@ -198,7 +198,7 @@ describe('Test Suite', function () {
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function (error) {
       if (error) return done(error);
-      Test.once('ignored', function (absolute, relative) {
+      Test.once('ignored', function (relative, absolute) {
         expect(relative).to.equal(filePath);
         done();
       })
@@ -248,7 +248,7 @@ describe('Deploy Test Suite', function () {
     var filePath = 'node_modules\\test\\test.js';
     mkdirp.sync(path.dirname(path.join(directory2, filePath)));
     fs.writeFileSync(path.join(directory2, filePath), 'test');
-    Deployer.once('ignored', function (absolute, relative) {
+    Deployer.once('ignored', function (relative, absolute) {
       expect(relative).to.equal(path.dirname(filePath));
       done();
     })
