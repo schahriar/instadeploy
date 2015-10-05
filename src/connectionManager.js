@@ -60,13 +60,23 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 			_this.ErrorHandler.apply(_this, arguments) 
 		});
 	}else{
+		var KEY_BUFFER = undefined;
+		if(_this.remote.privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1) {
+			try {
+				KEY_BUFFER = fs.readFileSync(path.resolve(_this.remote.privateKey));
+			}catch (e) {
+				KEY_BUFFER = _this.remote.privateKey;
+			}
+		}else if (_this.remote.privateKey.length > 0) {
+			KEY_BUFFER = _this.remote.privateKey;
+		}
 		_this.connection = new Client({
 			port: _this.remote.port || 22,
 			host: _this.remote.host,
 			username: _this.remote.username,
 			password: _this.remote.password,
 			// Rough Test
-			privateKey: (_this.remote.privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1)?fs.readFileSync(path.resolve(_this.remote.privateKey)):(_this.remote.privateKey.length > 0)?_this.remote.privateKey:undefined
+			privateKey: undefined
 		});
 		// Unqiue Upload Path for this Connection
 		_this.path = _this.remote.path || '';
