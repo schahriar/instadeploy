@@ -40,7 +40,7 @@ var InstaDeploy = function (remoteArray, options) {
 			// Push From TimedQueue to Async Queue
 			context.queue.push(item, item.callback);
 			// Emit an uploadStarted event
-			context.emit('uploadStarted', item.localPath, item.relativePath, item.remotePath);
+			context.emit('uploadStarted', item.relativePath, item.localPath, item.remotePath);
 		})
 		// Reset SmartQueue
 		context.smartQueueList = [];
