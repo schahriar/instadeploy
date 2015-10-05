@@ -28,10 +28,10 @@ function GetConfig(PATH, callback) {
         }else{
             try {
                 var ConfigData = JSON.parse(data.toString('utf8'));
-                callback(null, ConfigData);
             }catch(e) {
                 SetConfig(PATH, DefaultConfig, callback);
             }
+            callback(null, ConfigData);
         }
     })
 }
