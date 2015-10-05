@@ -95,7 +95,7 @@ new ssh2.Server({
   console.log('Listening on port ' + this.address().port);
 });
 
-var Deployer = new InstaDeploy([
+var Test = new InstaDeploy([
   {
     name: 'test',
     host: 'localhost',
@@ -110,19 +110,19 @@ var Deployer = new InstaDeploy([
   });
 
 /* DEBUG
-Deployer.on('connect', function (remote) {
+Test.on('connect', function (remote) {
   console.log("::CLIENT::", "Connected to", remote.host)
 })
-Deployer.on('disconnect', function (remote) {
+Test.on('disconnect', function (remote) {
   console.log("::CLIENT::", "Disconnected from", remote.host)
 })
-Deployer.on('failed', function () {
+Test.on('failed', function () {
   console.log("::CLIENT::", "Failed Upload", arguments)
 })
-Deployer.on('uploaded', function () {
+Test.on('uploaded', function () {
   console.log("::CLIENT::", "Upload Complete", arguments)
 })
-Deployer.on('uploadStarted', function () {
+Test.on('uploadStarted', function () {
   console.log("::CLIENT::", "Upload Started", arguments);
 })
 */
@@ -132,9 +132,9 @@ Deployer.on('uploadStarted', function () {
 describe('Test Suite', function(){
   var directory = temp.mkdirSync('InstaDeployTest');
   this.timeout(5500);
-  Deployer.watch(directory, './test');
+  Test.watch(directory, './test');
 	it("Should Connect To SFTP", function(done){
-    Deployer.on('connect', function (remote) {
+    Test.on('connect', function (remote) {
       done();
     })
 	})
@@ -142,7 +142,7 @@ describe('Test Suite', function(){
     var fileName = 'test.js';
     fs.writeFile(path.join(directory, fileName), 'HelloWorld', function(error) {
       if(error) return done(error);
-      Deployer.once('uploaded', function () {
+      Test.once('uploaded', function () {
         expect(STORE_BUFFERS['test/'+fileName].data).to.equal('HelloWorld');
         done();
       })
@@ -153,7 +153,7 @@ describe('Test Suite', function(){
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloWorld2', function(error) {
       if(error) return done(error);
-      Deployer.once('uploaded', function () {
+      Test.once('uploaded', function () {
         expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloWorld2');
         done();
       })
@@ -164,7 +164,7 @@ describe('Test Suite', function(){
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
       if(error) return done(error);
-      Deployer.once('uploaded', function () {
+      Test.once('uploaded', function () {
         expect(STORE_BUFFERS['test/'+filePath].data).to.equal('HelloFromFakeNodeModule');
         done();
       })
@@ -176,7 +176,7 @@ describe('Test Suite', function(){
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
       if(error) return done(error);
-      Deployer.once('ignored', function (absolute, relative) {
+      Test.once('ignored', function (absolute, relative) {
         expect(path.basename(relative)).to.equal(path.basename(filePath));
         done();
       })
@@ -188,7 +188,7 @@ describe('Test Suite', function(){
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
       if(error) return done(error);
-      Deployer.once('ignored', function (absolute, relative) {
+      Test.once('ignored', function (absolute, relative) {
         expect(relative).to.equal(path.dirname(filePath));
         done();
       })
@@ -200,7 +200,7 @@ describe('Test Suite', function(){
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFile(path.join(directory, filePath), 'HelloFromFakeNodeModule', function(error) {
       if(error) return done(error);
-      Deployer.once('ignored', function (absolute, relative) {
+      Test.once('ignored', function (absolute, relative) {
         expect(relative).to.equal(filePath);
         done();
       })
@@ -208,19 +208,44 @@ describe('Test Suite', function(){
   })
 });
 
+
+var Deployer = new InstaDeploy([
+  {
+    name: 'test',
+    host: 'localhost',
+    port: 8635,
+    username: 'root',
+    password: 'test',
+    path: 'uploads',
+    privateKey: KEY
+  }
+], {
+    queueTime: 100,
+    ignore: ['node_modules\\**', '.gitignore']
+  });
+
 describe('Deploy Test Suite', function(){
   this.timeout(5500);
   var directory = temp.mkdirSync('InstaDeployTest2');
   var directory2 = temp.mkdirSync('InstaDeployTest3');
+  Deployer.watch(directory, './test2');
+  it('Should Allow for Unique Host Paths', function(done) {
+    var filePath = 'index.js';
+    mkdirp.sync(path.dirname(path.join(directory, filePath)));
+    fs.writeFileSync(path.join(directory, filePath), 'test');
+    Deployer.once('uploaded', function () {
+      expect(STORE_BUFFERS['uploads/test2/'+filePath].data).to.equal('test');
+      done();
+    })
+  })
   it('Should Copy All Files on Initial Connection', function(done) {
     var filePath = 'src/test.js';
     mkdirp.sync(path.dirname(path.join(directory, filePath)));
     fs.writeFileSync(path.join(directory, filePath), 'test');
     Deployer.once('uploaded', function () {
-      expect(STORE_BUFFERS['test2/'+filePath].data).to.equal('test');
+      expect(STORE_BUFFERS['uploads/test2/'+filePath].data).to.equal('test');
       done();
     })
-    Deployer.watch(directory, './test2');
   })
   it('Should Ignore Matching Files on Initial Connection', function(done) {
     var filePath = 'node_modules\\test\\test.js';
