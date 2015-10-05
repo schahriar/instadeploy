@@ -114,8 +114,8 @@ InstaDeploy.prototype.watch = function(directoryPath, remotePath) {
 		// Push File Data to SmartQueue
 		context.smartQueueList.push({ localPath: PATH, remotePath: path.join(remote, path.relative(directory, PATH)), callback: function(error) {
 			// If there is no upload error emit an uploaded event otherwise emit failed with error & path
-			if(!error) context.emit('uploaded', null, path.relative(directory, PATH));
-			else context.emit('failed', error, path.relative(directory, PATH));
+			if(!error) context.emit('uploaded', null, path.relative(directory, PATH), PATH);
+			else context.emit('failed', error, path.relative(directory, PATH), PATH);
 		}});
 	}, function FILE_ON_IGNORED(absolute, relative) {
 		// -- ON FILE_IGNORED -- //
