@@ -75,8 +75,14 @@ var tasks = {
                     },
                     {
                         type: "input",
-                        name: "privateKey",
+                        name: "path",
                         default: argv._[5],
+                        message: "Upload Path for this host: (e.g. /home/user/uploads) (if any)"
+                    },
+                    {
+                        type: "input",
+                        name: "privateKey",
+                        default: argv._[6],
                         message: "Absolute Path to SFTP Private Key: (if any)"
                     }
                 ]

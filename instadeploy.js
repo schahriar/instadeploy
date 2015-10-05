@@ -75,7 +75,8 @@ var InstaDeploy = function (remoteArray, options) {
 			// Push a new function to Async Parallel Array
 			parallelExecutionArray.push(function(_callback){
 				// If a connection is available upload file otherwise throw
-				if(context.clientInstances[name].connection) context.clientInstances[name].connection.upload(file.localPath, file.remotePath, _callback);
+				// - Path Join -> Combines Unique Host based paths for each upload
+				if(context.clientInstances[name].connection) context.clientInstances[name].connection.upload(file.localPath, path.join(context.clientInstances[name].path, file.remotePath), _callback);
 				else _callback(new Error("Connection instance not found!"));
 			});
 		}

@@ -68,6 +68,8 @@ ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attem
 			// Rough Test
 			privateKey: (_this.remote.privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1)?fs.readFileSync(path.resolve(_this.remote.privateKey)):(_this.remote.privateKey.length > 0)?_this.remote.privateKey:undefined
 		});
+		// Unqiue Upload Path for this Connection
+		_this.path = _this.remote.path || '';
 		// Handle Initial Connection
 		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });
 		// Reset on connection
