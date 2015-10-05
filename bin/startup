@@ -52,10 +52,9 @@ var tasks = {
                             for(var i=0; i<CONFIG.hosts.length; i++) {
                                 if(CONFIG.hosts[i].name === input) {
                                     return "Unique Name already exists. Please remove using instadeploy remove or provide another name.";
-                                }else{
-                                    return true;
                                 }
                             }
+                            return true;
                         }
                     },
                     {
@@ -185,7 +184,7 @@ var tasks = {
         description: "WATCHING|WATCHES| CURRENT DIRECTORY FOR CHANGES",
         category: "exec",
         FUNC: function(argv, CONFIG) {
-            if(!CONFIG.hosts) {
+            if(CONFIG.hosts.length <= 0) {
                 return herb.warn("No Host Found. Please add one using instadeploy add command");
             }
             var Deployer = new InstaDeploy(CONFIG.hosts, {
