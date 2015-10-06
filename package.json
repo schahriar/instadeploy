@@ -1,6 +1,6 @@
 {
   "name": "instadeploy",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Instantly Deploy a folder to multiple servers",
   "main": "instadeploy.js",
   "scripts": {

@@ -70,7 +70,6 @@ var InstaDeploy = function (remoteArray, options) {
 	context.parallel = function PushToParallel(array, name, file) {
 		// Push a new function to Async Parallel Array
 		array.push(function(_callback){
-			console.log(name)
 			// If a connection is available upload file otherwise throw
 			// - Path Join -> Combines Unique Host based paths for each upload
 			if(context.clientInstances[name].connection) context.clientInstances[name].connection.upload(file.localPath, path.join(context.clientInstances[name].path, file.remotePath), _callback);
