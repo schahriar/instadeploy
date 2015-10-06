@@ -66,19 +66,23 @@ var InstaDeploy = function (remoteArray, options) {
 		// Start the connection
 		context.clientInstances[remote.name].connect(true);
 	})
+	// For every remote instance (aka Connection) available
+	context.parallel = function PushToParallel(array, name, file) {
+		// Push a new function to Async Parallel Array
+		array.push(function(_callback){
+			console.log(name)
+			// If a connection is available upload file otherwise throw
+			// - Path Join -> Combines Unique Host based paths for each upload
+			if(context.clientInstances[name].connection) context.clientInstances[name].connection.upload(file.localPath, path.join(context.clientInstances[name].path, file.remotePath), _callback);
+			else _callback(new Error("Connection instance not found!"));
+		});
+	}
 	// Create an Async queue for uploads
 	context.queue = async.queue(function (file, callback) {
 		// Array for storing Parallel functions
 		var parallelExecutionArray = [];
-		// For every remote instance (aka Connection) available
-		for(var name in context.clientInstances) { 
-			// Push a new function to Async Parallel Array
-			parallelExecutionArray.push(function(_callback){
-				// If a connection is available upload file otherwise throw
-				// - Path Join -> Combines Unique Host based paths for each upload
-				if(context.clientInstances[name].connection) context.clientInstances[name].connection.upload(file.localPath, path.join(context.clientInstances[name].path, file.remotePath), _callback);
-				else _callback(new Error("Connection instance not found!"));
-			});
+		for(var name in context.clientInstances) {
+			if (context.clientInstances.hasOwnProperty(name)) context.parallel(parallelExecutionArray, name, file);
 		}
 		// If no remote instances are available throw an error (to prevent false events from firing)
 		// Else run the Async Parallel with a given limit
