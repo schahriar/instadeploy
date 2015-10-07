@@ -22,7 +22,7 @@ instadeploy ignore ".gitignore" "node_modules/**" ".git/**" <pattern4> <pattern5
 ```
 
 ----
-Watch a folder
+Watch a folder (use *-v* or *-verbosity* to get accurate input)
 ```Batchfile
 instadeploy watch <local_path> <common_remote_path>
 ```
