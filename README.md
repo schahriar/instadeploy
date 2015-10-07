@@ -71,7 +71,7 @@ var Deployer = new InstaDeploy([
 - **end**: (args-> None) Emitted when all items of the batch have been uploaded
 
 ## Disclaimer
-Passwords are written as clear-text into the config file *.instadeploy*. There will an upcoming update that allows for password prompts before every watch but in the mean time you can use a privateKey only access by passing the privateKey absolute path or string to the CLI or API. You may store passwords as clear-text but only at your own risk.
+Passwords are written as clear-text into the config file *.instadeploy*. There will be an upcoming update that allows for password prompts before every watch but in the mean time you can use a privateKey only access by passing the privateKey absolute path or string to the CLI or API. You may store passwords as clear-text but only at your own risk.
 
 ## License
 MIT &copy; Schahriar SaffarShargh - [Full License](https://github.com/schahriar/anti/blob/master/README.md)
