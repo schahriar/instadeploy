@@ -193,6 +193,15 @@ var tasks = {
                 queueTime: argv.queuetime
             })
             Deployer.watch(argv._[1] || './', argv._[2] || './');
+            // Verbosity
+            if(argv.verbose || argv.v) {
+                Deployer.on('uploadStarted', function (relative, local, remote) {
+                    console.log("::INSTADEPLOY::", "Upload Started", relative, 'to', remote);
+                })
+                Deployer.on('uploaded', function (relative, local, remote) {
+                    console.log("::INSTADEPLOY::", "Uploaded", relative, 'to', remote);
+                })
+            }
             Deployer.on('attempt', function (remote) {
                 console.log("::INSTADEPLOY::", "Attempting Connection to", remote.name, '@', remote.host)
             })
