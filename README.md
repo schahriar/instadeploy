@@ -52,6 +52,8 @@ var Deployer = new InstaDeploy([
   ignore: ['node_modules\\**', '.gitignore']
 })
 ```
+*Note:* If a password is not provided the user will be prompted for it. To disable this pass a 'noprompt' attribute with every remote connection object that is passed to InstaDeploy.
+
 ## Options
 - **maxConcurrentConnections**:   \<Number> 5
 - **queueTime**:    \<Time:MS> 1500
@@ -69,9 +71,6 @@ var Deployer = new InstaDeploy([
 -   --------
 - **start**: (args-> \<Int>NumberOfItems) Emitted when a new batch is queued for upload
 - **end**: (args-> None) Emitted when all items of the batch have been uploaded
-
-## Disclaimer
-Passwords are written as clear-text into the config file *.instadeploy*. There will be an upcoming update that allows for password prompts before every watch but in the mean time you can use a privateKey only access by passing the privateKey absolute path or string to the CLI or API. You may store passwords as clear-text but only at your own risk.
 
 ## License
 MIT &copy; Schahriar SaffarShargh - [Full License](https://github.com/schahriar/anti/blob/master/README.md)

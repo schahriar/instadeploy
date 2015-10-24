@@ -3,6 +3,7 @@ var util = require('util');
 var Client = require('scp2').Client;
 var fs = require('fs');
 var path = require('path');
+var inquirer = require("inquirer");
 
 var ConnectionManger = function Connection_Manger_Init(remote) {
 	this.retries = 0;
@@ -13,7 +14,7 @@ var ConnectionManger = function Connection_Manger_Init(remote) {
 	this.error = null;
 	this.shouldClose = false;
 	this.timeout = null;
-	
+
 	eventEmmiter.call(this);
 }
 
@@ -27,12 +28,12 @@ ConnectionManger.prototype.connect = function Connection_Manger_Attempt_Init() {
 ConnectionManger.prototype.ErrorHandler = function Connection_Manger_Error_Handler(error) {
 	var _this = this;
 	// If an error is present handle it
-	if(error) {
+	if (error) {
 		// If Connection retries are less than max retries re-attempt
 		// Otherwise consider Connection as failed
 		if (_this.retries <= 10) {
 			// Attempt timeout
-			_this.timeout = setTimeout(function(){
+			_this.timeout = setTimeout(function () {
 				// Emit disconnected event
 				_this.emit('disconnected', _this.remote, _this);
 				_this.connected = false;
@@ -42,7 +43,7 @@ ConnectionManger.prototype.ErrorHandler = function Connection_Manger_Error_Handl
 				// Re-attempt
 				_this.AttemptConnection();
 			}, 1000);
-		}else{
+		} else {
 			_this.failed = true;
 			_this.emit('failed', _this);
 		}
@@ -52,52 +53,75 @@ ConnectionManger.prototype.ErrorHandler = function Connection_Manger_Error_Handl
 ConnectionManger.prototype.AttemptConnection = function Connection_Manager_Attempt(init) {
 	var _this = this;
 	// Connect to Server
-	_this.emit('attempting', _this.remote, _this);
 	// If Connection is already initialized attempt reconnection
 	// Otherwise initialize Connection
-	if(!init) {
-		_this.connection.sftp(function(error){
-			_this.ErrorHandler.apply(_this, arguments) 
+	if (!init) {
+		_this.emit('attempting', _this.remote, _this);
+		_this.connection.sftp(function (error) {
+			_this.ErrorHandler.apply(_this, arguments)
 		});
-	}else{
-		var KEY_BUFFER = undefined;
-		if(_this.remote.privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1) {
-			try {
-				KEY_BUFFER = fs.readFileSync(path.resolve(_this.remote.privateKey));
-			}catch (e) {
+	} else {
+		// IF PASSWORD IS NOT DEFINED PROMPT FOR IT
+		if (!_this.remote.password && !_this.remote.noprompt) {
+			inquirer.prompt([{
+				type: "confirm",
+				name: "hasPass",
+				message: "Do you have a password/passphrase for " + _this.remote.name + " (" + _this.remote.username + "@" + _this.remote.host + ")?"
+			}, {
+				type: "password",
+				name: "password",
+				message: "Password/Passphrase for " + _this.remote.name + " (" + _this.remote.username + "@" + _this.remote.host + "):",
+				when: function (prompt) {
+					return (prompt.hasPass === true)
+				}
+			}], function (answers) {
+				_this.remote.password = answers.password || "";
+				reAttempt();
+			});
+		}else {
+			reAttempt();
+		}
+		function reAttempt() {
+			_this.emit('attempting', _this.remote, _this);
+			var KEY_BUFFER = undefined;
+			if (_this.remote.privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1) {
+				try {
+					KEY_BUFFER = fs.readFileSync(path.resolve(_this.remote.privateKey));
+				} catch (e) {
+					KEY_BUFFER = _this.remote.privateKey;
+				}
+			} else if (_this.remote.privateKey.length > 0) {
 				KEY_BUFFER = _this.remote.privateKey;
 			}
-		}else if (_this.remote.privateKey.length > 0) {
-			KEY_BUFFER = _this.remote.privateKey;
+			_this.connection = new Client({
+				port: _this.remote.port || 22,
+				host: _this.remote.host,
+				username: _this.remote.username,
+				password: _this.remote.password,
+				// Rough Test
+				privateKey: undefined
+			});
+			// Unqiue Upload Path for this Connection
+			_this.path = _this.remote.path || '';
+			// Handle Initial Connection
+			_this.connection.sftp(function () { _this.ErrorHandler.apply(_this, arguments) });
+			// Reset on connection
+			_this.connection.on('ready', function () {
+				_this.retries = 0;
+				_this.connected = true;
+				_this.error = null;
+				_this.emit('connected', _this.remote, _this);
+			});
+			// Try to reconnect
+			_this.connection.on('error', _this.ErrorHandler);
+			_this.connection.on('end', function () {
+				/* ShouldClose is not implemented */
+				if (!_this.shouldClose) _this.ErrorHandler(true);
+			});
+			_this.connection.on('close', function () {
+				if (!_this.shouldClose) _this.ErrorHandler(true);
+			});
 		}
-		_this.connection = new Client({
-			port: _this.remote.port || 22,
-			host: _this.remote.host,
-			username: _this.remote.username,
-			password: _this.remote.password,
-			// Rough Test
-			privateKey: undefined
-		});
-		// Unqiue Upload Path for this Connection
-		_this.path = _this.remote.path || '';
-		// Handle Initial Connection
-		_this.connection.sftp(function() { _this.ErrorHandler.apply(_this, arguments) });
-		// Reset on connection
-		_this.connection.on('ready', function() {
-			_this.retries = 0;
-			_this.connected = true;
-			_this.error = null;
-			_this.emit('connected', _this.remote, _this);
-		});
-		// Try to reconnect
-		_this.connection.on('error', _this.ErrorHandler);
-		_this.connection.on('end', function() {
-			/* ShouldClose is not implemented */
-			if(!_this.shouldClose) _this.ErrorHandler(true);
-		});
-		_this.connection.on('close', function() {
-			if(!_this.shouldClose) _this.ErrorHandler(true);
-		});
 	}
 }
 
